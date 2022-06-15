@@ -53,7 +53,13 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 func createBook(w http.ResponseWriter, r *http.Request) {
 	var book Book
 
+	r.ParseForm()
+
+	fmt.Println(r.Body)
+
 	_ = json.NewDecoder(r.Body).Decode(&book)
+
+	fmt.Println(book)
 
 	book.ID = "1231234"
 
