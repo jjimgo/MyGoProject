@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type Book struct {
-	ID     string  `json:"Id"`
+	ID     string  `json:"id"`
 	Isbn   string  `json:"Isbn"`
 	Title  string  `json:"Title"`
 	Author *Author `json:"Auther"`
@@ -51,26 +52,28 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func createBook(w http.ResponseWriter, r *http.Request) {
-	var book Book
-
 	r.ParseForm()
 
-	fmt.Println(r.Body)
+	var bookSecond Book
 
-	_ = json.NewDecoder(r.Body).Decode(&book)
+	fmt.Println("before Json.NewDecoder", bookSecond) // 데이터가 없으니깐 = nil
+	fmt.Println("r.Body Data", r.Body)                // body에 입력이 되어서 들어오는 Data
 
-	fmt.Println(book)
+	_ = json.NewDecoder(r.Body).Decode(&bookSecond)
 
-	book.ID = "1231234"
+	fmt.Println("after Json NewDecoder", bookSecond) // type에 있는 데이터만 Decoder 된다.
 
-	books = append(books, book)
+	bookSecond.ID = "1231234"
 
-	res, _ := json.Marshal(book)
+	books = append(books, bookSecond)
+
+	res, _ := json.Marshal(bookSecond)
 
 	w.Write(res)
 }
 
 func updateBook(w http.ResponseWriter, r *http.Request) {
+
 	params := mux.Vars(r)
 
 	for index, item := range books {
@@ -89,8 +92,30 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteBook(w http.ResponseWriter, r *http.Request) {
+func test(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("ParseForm 실행 전 r.Body")
+	fmt.Println(r.Body)
 
+	r.ParseForm()
+
+	fmt.Println("ParseForm 실행 후 r.Body")
+	fmt.Println(r.Body)
+
+	res, _ := ioutil.ReadAll(r.Body)
+
+	fmt.Println("ParseForm 실행 후, ioutil.ReadAll r.Body")
+	fmt.Println(res)
+
+	var book Book
+
+	json.Unmarshal([]byte(res), book)
+
+	fmt.Println("jsonUnmarshal r.Body")
+	fmt.Println(book)
+
+}
+
+func deleteBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	for index, item := range books {
@@ -117,6 +142,8 @@ func main() {
 	r.HandleFunc("/api/books", createBook).Methods("POST")
 	r.HandleFunc("/api/books", updateBook).Methods("PUT")
 	r.HandleFunc("/api/books", deleteBook).Methods("DELETE")
+
+	r.HandleFunc("/test", test).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
